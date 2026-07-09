@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SWAT Time Clock</title>
+<style>
+body{font-family:Arial;background:#111;color:#eee;margin:0}
+.card{max-width:500px;margin:40px auto;background:#1b1b1b;padding:20px;border-radius:10px}
+input,button{width:100%;padding:10px;margin:8px 0}
+button{background:#1e88e5;color:#fff;border:0;border-radius:6px}
+#app{display:none}
+table{width:100%;border-collapse:collapse}td,th{border:1px solid #444;padding:6px}
+</style></head><body>
+<div class="card" id="login">
+<h2>SWAT Time Clock</h2>
+<input id="email" placeholder="Email">
+<button onclick="login()">Login</button>
+</div>
+<div class="card" id="app">
+<h2 id="welcome"></h2>
+<div>Status: <span id="status">OFF DUTY</span></div>
+<div>Shift: <span id="timer">00:00:00</span></div>
+<button id="clockBtn" onclick="toggleClock()">Clock In</button>
+<h3>History</h3>
+<table><thead><tr><th>In</th><th>Out</th></tr></thead><tbody id="hist"></tbody></table>
+</div>
+<script>
+let user,start=null,timerInt;
+function load(){let u=localStorage.getItem("swatUser");if(u){document.getElementById("email").value=u;login();}}
+function login(){user=document.getElementById("email").value.trim();if(!user)return alert("Enter email");
+localStorage.setItem("swatUser",user);
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
+document.getElementById("welcome").textContent="Welcome "+user;
+render();}
+function key(){return "logs_"+user}
+function logs(){return JSON.parse(localStorage.getItem(key())||"[]")}
+function save(l){localStorage.setItem(key(),JSON.stringify(l))}
+function toggleClock(){
+ if(!start){start=new Date();document.getElementById("status").textContent="ON DUTY";
+ document.getElementById("clockBtn").textContent="Clock Out";
+ timerInt=setInterval(()=>{let s=Math.floor((Date.now()-start)/1000),h=("0"+Math.floor(s/3600)).slice(-2),m=("0"+Math.floor(s%3600/60)).slice(-2),ss=("0"+s%60).slice(-2);timer.textContent=h+":"+m+":"+ss;},1000);
+ }else{
+ clearInterval(timerInt);
+ let l=logs();l.unshift({in:start.toLocaleString(),out:new Date().toLocaleString()});save(l);
+ start=null;timer.textContent="00:00:00";status.textContent="OFF DUTY";clockBtn.textContent="Clock In";render();
+ }}
+function render(){let tb=document.getElementById("hist");tb.innerHTML="";
+logs().forEach(r=>tb.innerHTML+=`<tr><td>${r.in}</td><td>${r.out}</td></tr>`);}
+load();
+</script></body></html>
